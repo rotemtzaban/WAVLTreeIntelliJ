@@ -58,13 +58,57 @@ public class WAVLTree {
         if (nearestNode.key == k) {
             return -1;
         }
-        if(nearestNode.isLeafNode()){
 
+        int rebalanceCount = 0;
+        WAVLNode newNode = new WAVLNode(k,i,nearestNode);
+        if(nearestNode.key > k){
+            nearestNode.left = newNode;
+        }
+        else {
+            nearestNode.right = newNode;
+        }
+        // The next call for isLeafNode still works if nearestNode was a leaf because its rank is not changed yet.
+        if(nearestNode.isLeafNode()){
+            nearestNode.promote();
+            rebalanceCount++;
+            rebalanceCount = rebalanceInsert(nearestNode, rebalanceCount);
         }
 
 
         size++;
         return 42; // to be replaced by student code
+    }
+
+    /**
+     * Rebalance the tree after a promote occured
+     * returns the number of rebalancing operations that was necessary
+     */
+    private int rebalanceInsert(WAVLNode node, int rebalanceCount){
+        if(node.rankDifference() == -1 || node.rankDifference() == 1)
+            return rebalanceCount;
+        else{
+            WAVLNode parent = node.parent;
+            //here node.rankDifference() = 0 and parent is not null
+            if(parent.leftChildRankDifference() == 1 || parent.rightChildRankDifference() == 1)
+            {
+                //Case 1 of rebalancing - rebalance a node of the form (1,0) or (0,1) of rank differences
+                parent.promote();
+                rebalanceCount ++;
+                rebalanceCount = rebalanceInsert(parent, rebalanceCount);
+            }
+            else if(node.isARightChild())
+            {
+                // selecting between rotating left or double rotating as rotating right and then left
+
+
+            }
+            else
+            {
+                // selecting between rotating right or double rotating as rotating left and then right
+
+            }
+            return 42;
+        }
     }
 
     /**
@@ -203,19 +247,19 @@ public class WAVLTree {
         return infoToArrayRecursive(node.right, array, index);
     }
 
-    private void leftRotate(WAVLNode node) {
+    private void rotateLeft(WAVLNode node) {
 
     }
 
-    private void rightRotate(WAVLNode node) {
+    private void rotateRight(WAVLNode node) {
 
     }
 
-    private void leftRightRotate(WAVLNode node) {
+    private void rotateLeftThenRight(WAVLNode node) {
 
     }
 
-    private void rightLeftRotate(WAVLNode node) {
+    private void rotateRightThenLeft(WAVLNode node) {
 
     }
 
@@ -278,11 +322,53 @@ public class WAVLTree {
         }
 
         public boolean isLeafNode(){
-            return (this.left.isExternalNode() && this.right.isExternalNode());
+            return this.rank == 0;
         }
 
         public boolean isUnaryNode(){
             return (this.left.isExternalNode() && !this.right.isExternalNode()) || (this.right.isExternalNode() && !this.left.isExternalNode());
+        }
+
+        /**
+         *
+         * @return -1 if this.parent is null and the rank difference between this and its parent otherwise
+         */
+        public int rankDifference(){
+            if (this.parent == null)
+                return -1;
+            else
+                return this.parent.rank - this.rank;
+        }
+
+        /**
+         * assuming this.parent is not null
+         * @return true if this node is a right child of its parent and false otherwise.
+         */
+        public boolean isARightChild(){
+            return this.parent.right == this;
+        }
+
+        /**
+         * assuming left is not external leaf
+         * @return the rank difference between this node and its left child
+         */
+        public int leftChildRankDifference(){
+            return this.rank - this.left.rank;
+        }
+
+        /**
+         * assuming right is not external leaf
+         * @return the rank difference between this node and its right child
+         */
+        public int rightChildRankDifference(){
+            return this.rank - this.right.rank;
+        }
+
+        public void setParent(WAVLNode parent){
+            if (isExternalNode()){
+                return;
+            }
+            this.parent = parent;
         }
 
         public void promote() {

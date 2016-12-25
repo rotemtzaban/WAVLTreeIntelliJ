@@ -61,6 +61,7 @@ public class WAVLTree {
 
         int rebalanceCount = 0;
         WAVLNode newNode = new WAVLNode(k,i,nearestNode);
+        newNode.parent = nearestNode;
         if(nearestNode.key > k){
             nearestNode.left = newNode;
         }
@@ -74,9 +75,8 @@ public class WAVLTree {
             rebalanceCount = rebalanceInsert(nearestNode, rebalanceCount);
         }
 
-
         size++;
-        return 42; // to be replaced by student code
+        return rebalanceCount;
     }
 
     /**
@@ -91,7 +91,7 @@ public class WAVLTree {
             //here node.rankDifference() = 0 and parent is not null
             if(parent.leftChildRankDifference() == 1 || parent.rightChildRankDifference() == 1)
             {
-                //Case 1 of rebalancing - rebalance a node of the form (1,0) or (0,1) of rank differences
+                //rebalance a node of the form (1,0) or (0,1) of rank differences
                 parent.promote();
                 rebalanceCount ++;
                 rebalanceCount = rebalanceInsert(parent, rebalanceCount);
@@ -99,15 +99,38 @@ public class WAVLTree {
             else if(node.isARightChild())
             {
                 // selecting between rotating left or double rotating as rotating right and then left
-
-
+                if(node.leftChildRankDifference() == 2){
+                    parent.demote();
+                    rotateLeft(parent);
+                    rebalanceCount += 2;
+                }
+                else {
+                    WAVLNode b = node.left;
+                    rotateRightThenLeft(parent);
+                    node.demote();
+                    parent.demote();
+                    b.promote();
+                    rebalanceCount += 5;
+                }
             }
             else
             {
                 // selecting between rotating right or double rotating as rotating left and then right
-
+                if(node.rightChildRankDifference() == 2){
+                    parent.demote();
+                    rotateRight(parent);
+                    rebalanceCount += 2;
+                }
+                else {
+                    WAVLNode b = node.right;
+                    rotateLeftThenRight(parent);
+                    node.demote();
+                    parent.demote();
+                    b.promote();
+                    rebalanceCount += 5;
+                }
             }
-            return 42;
+            return rebalanceCount;
         }
     }
 

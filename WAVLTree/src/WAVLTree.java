@@ -153,57 +153,87 @@ public class WAVLTree {
         }
         if(nearestNode.key != k)
             return -1;
-        else {
-            size--;
-            if(empty()) {
-                root = null;
-                min = null;
-                max = null;
-                return 0;
-            }
-            WAVLNode parent; // the parent of the node we deleted - used when we rebalance the tree.
-            if(!(nearestNode.isUnaryNode() || nearestNode.isLeafNode())){
-                WAVLNode s = findSuccessorInSubTree(nearestNode);
-                parent = s.parent;
-                removeNodeFromTree(s);
 
-                // putting s instead of the node we delete in the tree
-                s.parent = nearestNode.parent;
-                if(nearestNode != root) {  //might be false if we delete the root.
-                    if (nearestNode.isARightChild())
-                        nearestNode.parent.right = s;
-                    else
-                        nearestNode.parent.left = s;
-                }
-                else{
-                    root = s;
-                }
-                s.rank = nearestNode.rank;
-                s.right = nearestNode.right;
-                s.right.parent = s;
-                s.left = nearestNode.left;
-                s.left.parent = s;
+        size--;
+        if(empty()) {
+            root = null;
+            min = null;
+            max = null;
+            return 0;
+        }
+        if(nearestNode.key == min.key)
+            min = findSuccessor(min);
+        if(nearestNode.key == max.key)
+            max = findPredecessor(max);
+        WAVLNode parent; // the parent of the node we deleted - used when we rebalance the tree.
+        if(!(nearestNode.isUnaryNode() || nearestNode.isLeafNode())){
+            WAVLNode s = findSuccessorInSubTree(nearestNode);
+            parent = s.parent;
+            removeNodeFromTree(s);
+
+            // putting s instead of the node we delete in the tree
+            s.parent = nearestNode.parent;
+            if(nearestNode != root) {  //might be false if we delete the root.
+                if (nearestNode.isARightChild())
+                    nearestNode.parent.right = s;
+                else
+                    nearestNode.parent.left = s;
             }
             else{
-                parent = nearestNode.parent;
-                if(nearestNode == root){ // size > 0 because we checked this option in the start of delete.
-                    if(nearestNode.right.isExternalNode()){
-                        root = root.left;
-                        root.parent = null;
-                    }
-                    else{
-                        root = root.right;
-                        root.parent = null;
-                    }
-                    nearestNode.deleteFeilds();
-                    return 0;
-                }
-                else
-                    removeNodeFromTree(nearestNode);
+                root = s;
             }
-            nearestNode.deleteFeilds();
+            s.rank = nearestNode.rank;
+            s.right = nearestNode.right;
+            s.right.parent = s;
+            s.left = nearestNode.left;
+            s.left.parent = s;
         }
-        return 42; // to be replaced by student code
+        else{
+            parent = nearestNode.parent;
+            if(nearestNode == root){ // size > 0 because we checked this option in the start of delete.
+                //here is the option when we delete a root that is unary node in the tree.
+                if(nearestNode.right.isExternalNode()){
+                    root = root.left;
+                    root.parent = null;
+                }
+                else{
+                    root = root.right;
+                    root.parent = null;
+                }
+                nearestNode.deleteFeilds();
+                return 0;
+            }
+            else
+                removeNodeFromTree(nearestNode);
+        }
+        nearestNode.deleteFeilds();
+        int rebalanceCount = 0;
+        if(parent.isLeafNode() && parent.rightChildRankDifference() == 2 && parent.leftChildRankDifference() == 2){
+            parent.demote();
+            rebalanceCount++;
+            parent = parent.parent;
+        }
+
+
+    return rebalanceDelete(parent, rebalanceCount); // to be replaced by student code
+    }
+
+    private int rebalanceDelete(WAVLNode node, int rebalanceCount){
+        if((!(node.leftChildRankDifference() == 3 || node.rightChildRankDifference() == 3)) || node == null){
+            return rebalanceCount; // rebalance complete.
+        }
+        if(node.leftChildRankDifference() == 2 || node.rightChildRankDifference() == 2){ // the case of (3,2) or (2,3)
+            node.demote();
+            rebalanceCount++;
+            return rebalanceDelete(node.parent, rebalanceCount);
+        }
+        if(node.leftChildRankDifference() == 3){
+
+        }
+        else{
+
+        }
+
     }
 
     private void removeNodeFromTree(WAVLNode s){
@@ -239,13 +269,29 @@ public class WAVLTree {
 
     /**
      *
+     * @param node - the node that this method returns its successor in the tree
+     * @return the successor of node in the tree. or null if node has the largest key in the tree.
+     */
+    private WAVLNode findSuccessor(WAVLNode node){
+        if(node.right != null)
+            return minimumNode(node.right);
+        WAVLNode y = node.parent;
+        while (y != null && node == y.right){
+            node = y;
+            y = node.parent;
+        }
+        return y;
+    }
+
+    /**
+     *
      * @param node - the root of the subtree.
      * @return a WAVLNode in the subtree of node that has the lowest key that bigger then the key of node
      * and null if no such WAVLNode exists in the subtree (- node.right = null).
      */
     private WAVLNode findSuccessorInSubTree(WAVLNode node){
         if(node.right != null)
-            return MinimumNode(node.right);
+            return minimumNode(node.right);
         return null;
     }
     /**
@@ -253,42 +299,40 @@ public class WAVLTree {
      * @param node is the root of a subtree in which we return the node with the minimum key in. assuming node is not null.
      * @return WAVLNode with the minimum key in the subtree of node.
      */
-    private WAVLNode MinimumNode(WAVLNode node){
+    private WAVLNode minimumNode(WAVLNode node){
         while(node.left != null){
             node = node.left;
         }
         return node;
     }
 
-/* the following block comment is a code for predecessor if it will be needed. - REMOVE IF NOT.
-    */
-/**
+    /**
      *
-     * @param node - the root of the subtree.
-     * @return a WAVLNode in the subtree of node that has the highest key that lower then the key of node
-     * and null if no such WAVLNode exists in the subtree (- node.left = null).
-     *//*
-
-    private WAVLNode findPredecessorInSubTree(WAVLNode node){
+     * @param node - the node that this method returns its Predecessor in the tree
+     * @return the Predecessor of node in the tree. or null if node has the smallest key in the tree.
+     */
+    private WAVLNode findPredecessor(WAVLNode node){
         if(node.left != null)
-            return MaximumNode(node.left);
-        return null;
+            return maximumNode(node.left);
+        WAVLNode y = node.parent;
+        while (y != null && node == y.left){
+            node = y;
+            y = node.parent;
+        }
+        return y;
     }
 
-    */
-/**
-     *
+     /**
      * @param node is the root of a subtree in which we return the node with the maximum key in. assuming node is not null.
      * @return WAVLNode with the maximum key in the subtree of node.
-     *//*
+     */
 
-    private WAVLNode MaximumNode(WAVLNode node){
+    private WAVLNode maximumNode(WAVLNode node){
         while(node.right != null){
             node = node.right;
         }
         return node;
     }
-*/
 
     private WAVLNode findNearestNode(int key, WAVLNode node) {
         // if node is an empty tree or external node than return null
@@ -447,6 +491,10 @@ public class WAVLTree {
             }
         }
 
+        if(root == node){
+            root = rotatedNode;
+        }
+
         rotatedNode.parent = node.parent;
         node.setParent(rotatedNode);
 
@@ -469,6 +517,10 @@ public class WAVLTree {
             else {
                 node.parent.left = rotatedNode;
             }
+        }
+
+        if(root == node){
+            root = rotatedNode;
         }
 
         rotatedNode.parent = node.parent;

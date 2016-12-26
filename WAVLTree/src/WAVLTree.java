@@ -166,10 +166,10 @@ public class WAVLTree {
         if(nearestNode.key == max.key)
             max = findPredecessor(max);
         WAVLNode parent; // the parent of the node we deleted - used when we rebalance the tree.
-        if(!(nearestNode.isUnaryNode() || nearestNode.isLeafNode())){
+        if(!(nearestNode.isUnaryNode() || nearestNode.isLeafNode())){ // choosing its successor node to replace it if its not leaf and not unary node.
             WAVLNode s = findSuccessorInSubTree(nearestNode);
             parent = s.parent;
-            removeNodeFromTree(s);
+            removeNodeFromTree(s); // remove the successor from its current location on the tree.
 
             // putting s instead of the node we delete in the tree
             s.parent = nearestNode.parent;
@@ -182,6 +182,7 @@ public class WAVLTree {
             else{
                 root = s;
             }
+            //replace the node with its successor
             s.rank = nearestNode.rank;
             s.right = nearestNode.right;
             s.right.parent = s;
@@ -204,9 +205,11 @@ public class WAVLTree {
                 return 0;
             }
             else
-                removeNodeFromTree(nearestNode);
+                removeNodeFromTree(nearestNode); //if the node is already a leaf or unary node we remove it from the tree.
         }
-        nearestNode.deleteFeilds();
+        nearestNode.deleteFeilds(); //delete the node entirly
+
+        // rebalance the tree from now with the pointer to parent.
         int rebalanceCount = 0;
         if(parent.isLeafNode() && parent.rightChildRankDifference() == 2 && parent.leftChildRankDifference() == 2){
             parent.demote();
@@ -214,12 +217,18 @@ public class WAVLTree {
             parent = parent.parent;
         }
 
-
-    return rebalanceDelete(parent, rebalanceCount); // to be replaced by student code
+    return rebalanceDelete(parent, rebalanceCount);
     }
 
+    /**
+     * this function is fixing a violation of the WAVLTree from a specific node
+     * up and returns the number of rebalancing opperations done in order to fix it.
+     * @param node - a node that has a rank problem with one of its children that causing a violation of the WAVLTree.
+     * @param rebalanceCount number of rebalancing opperations done untill this point from the bottom of the tree.
+     * @return total amount of rebalancing opperations done untill the tree is WAVLTree (from bottom to root).
+     */
     private int rebalanceDelete(WAVLNode node, int rebalanceCount){
-        if((!(node.leftChildRankDifference() == 3 || node.rightChildRankDifference() == 3)) || node == null){
+        if((node == null || !(node.leftChildRankDifference() == 3 || node.rightChildRankDifference() == 3))){
             return rebalanceCount; // rebalance complete.
         }
         if(node.leftChildRankDifference() == 2 || node.rightChildRankDifference() == 2){ // the case of (3,2) or (2,3)
@@ -228,14 +237,70 @@ public class WAVLTree {
             return rebalanceDelete(node.parent, rebalanceCount);
         }
         if(node.leftChildRankDifference() == 3){
-
+            WAVLNode right = node.right;
+            if(right.leftChildRankDifference() == 2 && right.rightChildRankDifference() == 2){ //double demote
+                node.demote();
+                right.demote();
+                rebalanceCount += 2;
+                return rebalanceDelete(node.parent, rebalanceCount);
+            }
+            if(right.rightChildRankDifference() == 1){ //rotate
+                rotateLeft(node);
+                right.promote();
+                node.demote();
+                rebalanceCount += 3;
+                if(node.isLeafNode() && node.rightChildRankDifference() == 2 && node.leftChildRankDifference() == 2){
+                    node.demote();
+                    rebalanceCount++;
+                }
+                return rebalanceCount;
+            }
+            else{ //double rotate
+                WAVLNode a = right.left;
+                rotateRightThenLeft(node);
+                a.rank += 2;
+                right.demote();
+                node.rank -= 2;
+                rebalanceCount += 7;
+                return rebalanceCount;
+            }
         }
-        else{
-
+        else{ //- (1,3) = mirror cases of (3,1)
+            WAVLNode left = node.left;
+            if(left.leftChildRankDifference() == 2 && left.rightChildRankDifference() == 2){ //double demote
+                node.demote();
+                left.demote();
+                rebalanceCount += 2;
+                return rebalanceDelete(node.parent, rebalanceCount);
+            }
+            if(left.leftChildRankDifference() == 1){ //rotate
+                rotateRight(node);
+                left.promote();
+                node.demote();
+                rebalanceCount += 3;
+                if(node.isLeafNode() && node.rightChildRankDifference() == 2 && node.leftChildRankDifference() == 2){
+                    node.demote();
+                    rebalanceCount++;
+                }
+                return rebalanceCount;
+            }
+            else{ //double rotate
+                WAVLNode a = left.right;
+                rotateLeftThenRight(node);
+                a.rank += 2;
+                left.demote();
+                node.rank -= 2;
+                rebalanceCount += 7;
+                return rebalanceCount;
+            }
         }
 
     }
 
+    /**
+     * this function remove all pointers to the node s in the tree and bypass the node.
+     * @param s assuming leaf WAVKNode or an Unary WAVLNode that will be removed from the tree.
+     */
     private void removeNodeFromTree(WAVLNode s){
         WAVLNode parent = s.parent;
         if(s.isARightChild()){

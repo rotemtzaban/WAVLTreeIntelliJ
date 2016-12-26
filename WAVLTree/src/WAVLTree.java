@@ -146,23 +146,32 @@ public class WAVLTree {
         return 42; // to be replaced by student code
     }
 
+    /**
+     * finds the node with the specified key, or it's insertion point if a node with such key doesn't exist
+     * @param key - the key that is being searched
+     * @param node - the node whose subtree is being searched
+     * @return the node with the specified key if it exists or it's insertion point's parent if it doesn't
+     */
     private WAVLNode findNearestNode(int key, WAVLNode node) {
-        if (node == null) {
+        // if node is an empty tree or external node than return null
+        if (node == null || node.isExternalNode()) {
             return null;
         }
-
         while (true) {
+            //if key found return node
             if (node.key == key) {
                 return node;
             }
 
+            //if nodes key is bigger than requested tree, try to go right, else try to go left
+            //if son is external return node as insertion point
             if (node.key > key) {
-                if (node.left.rank == -1) {
+                if (node.left.isExternalNode()) {
                     return node;
                 }
                 node = node.left;
             } else {
-                if (node.right.rank == -1) {
+                if (node.right.isExternalNode()) {
                     return node;
                 }
                 node = node.right;
@@ -170,30 +179,6 @@ public class WAVLTree {
         }
     }
 
-    private WAVLNode findNearestNodeRecursive(int key, WAVLNode node){
-        if(node == null){
-            return null;
-        }
-
-        if(node.key == key){
-            return node;
-        }
-
-        if(node.key > key){
-            if(node.left.rank == -1){
-                return node;
-            }
-
-            return findNearestNodeRecursive(key, node.left);
-        }
-
-        if(node.right.rank == -1){
-            return node;
-        }
-
-        return findNearestNodeRecursive(key, node.right);
-
-    }
     /**
      * public String min()
      *
@@ -230,8 +215,15 @@ public class WAVLTree {
         return keys;
     }
 
+    /**
+     * Inserts the keys of the nodes in the subtree of a node, into an array at a specified index
+     * @param node - The node whose subtree is to be inserted into the array
+     * @param array - The array that the keys are inserted into
+     * @param index - The index at which the keys are inserted
+     * @return The last index where a key was inserted
+     */
     private int keysToArrayRecursive(WAVLNode node, int[] array, int index) {
-        if (node.rank == -1) {
+        if (node.isExternalNode()) {
             return index;
         }
 
@@ -258,8 +250,15 @@ public class WAVLTree {
         return arr;
     }
 
+    /**
+     * Inserts the infos of the subtree of node into an array at a specific index inorder
+     * @param node - The node whose subtree is inserted into the array
+     * @param array - The array that the infos are inserted into
+     * @param index The index at which the infos are inserted
+     * @return The last index where infos were inserted
+     */
     private int infoToArrayRecursive(WAVLNode node, String[] array, int index) {
-        if (node.rank == -1) {
+        if (node.isExternalNode()) {
             return index;
         }
 
@@ -270,6 +269,10 @@ public class WAVLTree {
         return infoToArrayRecursive(node.right, array, index);
     }
 
+    /**
+     * Rotates to the left the right son of node
+     * @param node - the node whose son is to be rotated
+     */
     private void rotateLeft(WAVLNode node) {
         WAVLNode rotatedNode = node.right;
         if(node.parent != null){
@@ -290,6 +293,10 @@ public class WAVLTree {
         rotatedNode.left = node;
     }
 
+    /**
+     * Rotates to the right the left son of node
+     * @param node - The node whose son is to be rotated
+     */
     private void rotateRight(WAVLNode node) {
         WAVLNode rotatedNode = node.left;
         if(node.parent != null){
@@ -310,11 +317,19 @@ public class WAVLTree {
         rotatedNode.right = node;
     }
 
+    /**
+     * Rotates to the left the left right grandson of node,
+     * then rotates to the right the left son of node
+     */
     private void rotateLeftThenRight(WAVLNode node) {
         rotateLeft(node.left);
         rotateRight(node);
     }
 
+    /**
+     * Rotates to the right the right left grandson of node,
+     * then rotate to the left the right son of node
+     */
     private void rotateRightThenLeft(WAVLNode node) {
         rotateRight(node.right);
         rotateLeft(node);
@@ -357,12 +372,7 @@ public class WAVLTree {
         Constructor for a new leaf node.
          */
         public WAVLNode(int key, String info, WAVLNode parent) {
-            this.left = external;
-            this.right = external;
-            this.parent = parent;
-            this.rank = 0;
-            this.key = key;
-            this.info = info;
+            this(key, info, 0, parent, external, external);
         }
 
         public WAVLNode(int key, String info, int rank, WAVLNode parent, WAVLNode left, WAVLNode right){
@@ -433,10 +443,9 @@ public class WAVLTree {
             rank++;
         }
 
-        private void demote() {
+        public void demote() {
             rank--;
         }
-
     }
 
 }

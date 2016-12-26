@@ -447,6 +447,10 @@ public class WAVLTree {
             }
         }
 
+        if(root == node){
+            root = rotatedNode;
+        }
+
         rotatedNode.parent = node.parent;
         node.setParent(rotatedNode);
 
@@ -469,6 +473,10 @@ public class WAVLTree {
             else {
                 node.parent.left = rotatedNode;
             }
+        }
+
+        if(root == node){
+            root = rotatedNode;
         }
 
         rotatedNode.parent = node.parent;

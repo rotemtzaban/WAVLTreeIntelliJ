@@ -68,7 +68,11 @@ public class WAVLTree {
         else {
             nearestNode.right = newNode;
         }
-        // The next call for isLeafNode still works if nearestNode was a leaf because its rank is not changed yet.
+        if(newNode.key < min.key)
+            min = newNode;
+        if(newNode.key > max.key)
+            max = newNode;
+        // The next call for isLeafNode still returns true nearestNode was a leaf because its rank is not changed yet.
         if(nearestNode.isLeafNode()){
             nearestNode.promote();
             rebalanceCount++;
@@ -143,20 +147,155 @@ public class WAVLTree {
      * returns -1 if an item with key k was not found in the tree.
      */
     public int delete(int k) {
+        WAVLNode nearestNode = findNearestNode(k, root);
+        if(nearestNode == null){
+            return -1;
+        }
+        if(nearestNode.key != k)
+            return -1;
+        else {
+            size--;
+            if(empty()) {
+                root = null;
+                min = null;
+                max = null;
+                return 0;
+            }
+            WAVLNode parent; // the parent of the node we deleted - used when we rebalance the tree.
+            if(!(nearestNode.isUnaryNode() || nearestNode.isLeafNode())){
+                WAVLNode s = findSuccessorInSubTree(nearestNode);
+                parent = s.parent;
+                removeNodeFromTree(s);
+
+                // putting s instead of the node we delete in the tree
+                s.parent = nearestNode.parent;
+                if(nearestNode != root) {  //might be false if we delete the root.
+                    if (nearestNode.isARightChild())
+                        nearestNode.parent.right = s;
+                    else
+                        nearestNode.parent.left = s;
+                }
+                else{
+                    root = s;
+                }
+                s.rank = nearestNode.rank;
+                s.right = nearestNode.right;
+                s.right.parent = s;
+                s.left = nearestNode.left;
+                s.left.parent = s;
+            }
+            else{
+                parent = nearestNode.parent;
+                if(nearestNode == root){ // size > 0 because we checked this option in the start of delete.
+                    if(nearestNode.right.isExternalNode()){
+                        root = root.left;
+                        root.parent = null;
+                    }
+                    else{
+                        root = root.right;
+                        root.parent = null;
+                    }
+                    nearestNode.deleteFeilds();
+                    return 0;
+                }
+                else
+                    removeNodeFromTree(nearestNode);
+            }
+            nearestNode.deleteFeilds();
+        }
         return 42; // to be replaced by student code
     }
 
+    private void removeNodeFromTree(WAVLNode s){
+        WAVLNode parent = s.parent;
+        if(s.isARightChild()){
+            if(s.isLeafNode())
+                parent.right = external;
+            else
+            if(s.right.isExternalNode()) {
+                parent.right = s.left;
+                s.left.parent = parent;
+            }
+            else {
+                parent.right = s.right;
+                s.right.parent = parent;
+            }
+        }
+        else {
+            if(s.isLeafNode())
+                parent.left = external;
+            else
+            if(s.right.isExternalNode()) {
+                parent.left = s.left;
+                s.left.parent = parent;
+            }
+            else {
+                parent.left = s.right;
+                s.right.parent = parent;
+            }
+        }
+
+    }
+
     /**
-     * finds the node with the specified key, or it's insertion point if a node with such key doesn't exist
-     * @param key - the key that is being searched
-     * @param node - the node whose subtree is being searched
-     * @return the node with the specified key if it exists or it's insertion point's parent if it doesn't
+     *
+     * @param node - the root of the subtree.
+     * @return a WAVLNode in the subtree of node that has the lowest key that bigger then the key of node
+     * and null if no such WAVLNode exists in the subtree (- node.right = null).
      */
+    private WAVLNode findSuccessorInSubTree(WAVLNode node){
+        if(node.right != null)
+            return MinimumNode(node.right);
+        return null;
+    }
+    /**
+     *
+     * @param node is the root of a subtree in which we return the node with the minimum key in. assuming node is not null.
+     * @return WAVLNode with the minimum key in the subtree of node.
+     */
+    private WAVLNode MinimumNode(WAVLNode node){
+        while(node.left != null){
+            node = node.left;
+        }
+        return node;
+    }
+
+/* the following block comment is a code for predecessor if it will be needed. - REMOVE IF NOT.
+    */
+/**
+     *
+     * @param node - the root of the subtree.
+     * @return a WAVLNode in the subtree of node that has the highest key that lower then the key of node
+     * and null if no such WAVLNode exists in the subtree (- node.left = null).
+     *//*
+
+    private WAVLNode findPredecessorInSubTree(WAVLNode node){
+        if(node.left != null)
+            return MaximumNode(node.left);
+        return null;
+    }
+
+    */
+/**
+     *
+     * @param node is the root of a subtree in which we return the node with the maximum key in. assuming node is not null.
+     * @return WAVLNode with the maximum key in the subtree of node.
+     *//*
+
+    private WAVLNode MaximumNode(WAVLNode node){
+        while(node.right != null){
+            node = node.right;
+        }
+        return node;
+    }
+*/
+
     private WAVLNode findNearestNode(int key, WAVLNode node) {
         // if node is an empty tree or external node than return null
         if (node == null || node.isExternalNode()) {
             return null;
         }
+
         while (true) {
             //if key found return node
             if (node.key == key) {
@@ -179,6 +318,30 @@ public class WAVLTree {
         }
     }
 
+    private WAVLNode findNearestNodeRecursive(int key, WAVLNode node){
+        if(node == null){
+            return null;
+        }
+
+        if(node.key == key){
+            return node;
+        }
+
+        if(node.key > key){
+            if(node.left.rank == -1){
+                return node;
+            }
+
+            return findNearestNodeRecursive(key, node.left);
+        }
+
+        if(node.right.rank == -1){
+            return node;
+        }
+
+        return findNearestNodeRecursive(key, node.right);
+
+    }
     /**
      * public String min()
      *
@@ -398,7 +561,7 @@ public class WAVLTree {
 
         /**
          *
-         * @return -1 if this.parent is null and the rank difference between this and its parent otherwise
+         * @return -1 if this.parent is null and the rank difference between this and its parent otherwise.
          */
         public int rankDifference(){
             if (this.parent == null)
@@ -446,6 +609,14 @@ public class WAVLTree {
         public void demote() {
             rank--;
         }
+
+        private void deleteFeilds(){
+            this.left = null;
+            this.right = null;
+            this.parent = null;
+            this.info = null;
+        }
+
     }
 
 }

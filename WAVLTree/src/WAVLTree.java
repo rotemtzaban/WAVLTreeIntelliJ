@@ -271,19 +271,53 @@ public class WAVLTree {
     }
 
     private void rotateLeft(WAVLNode node) {
+        WAVLNode rotatedNode = node.right;
+        if(node.parent != null){
+            if(node.isARightChild()) {
+                node.parent.right = rotatedNode;
+            }
+            else {
+                node.parent.left = rotatedNode;
+            }
+        }
 
+        rotatedNode.parent = node.parent;
+        node.setParent(rotatedNode);
+
+        node.right = rotatedNode.left;
+        node.right.setParent(node);
+
+        rotatedNode.left = node;
     }
 
     private void rotateRight(WAVLNode node) {
+        WAVLNode rotatedNode = node.left;
+        if(node.parent != null){
+            if(node.isARightChild()) {
+                node.parent.right = rotatedNode;
+            }
+            else {
+                node.parent.left = rotatedNode;
+            }
+        }
 
+        rotatedNode.parent = node.parent;
+        node.setParent(rotatedNode);
+
+        node.left = rotatedNode.right;
+        node.left.setParent(node);
+
+        rotatedNode.right = node;
     }
 
     private void rotateLeftThenRight(WAVLNode node) {
-
+        rotateLeft(node.left);
+        rotateRight(node);
     }
 
     private void rotateRightThenLeft(WAVLNode node) {
-
+        rotateRight(node.right);
+        rotateLeft(node);
     }
 
     /**
@@ -391,6 +425,7 @@ public class WAVLTree {
             if (isExternalNode()){
                 return;
             }
+
             this.parent = parent;
         }
 

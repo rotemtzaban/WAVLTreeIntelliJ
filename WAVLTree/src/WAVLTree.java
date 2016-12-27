@@ -164,47 +164,21 @@ public class WAVLTree {
             return 0;
         }
         if(nearestNode.key == min.key)
-            min = findSuccessor(min);
+            min = min.parent;
         if(nearestNode.key == max.key)
-            max = findPredecessor(max);
+            max = max.parent;
         WAVLNode parent; // the parent of the node we deleted - used when we rebalance the tree.
         if(!(nearestNode.isUnaryNode() || nearestNode.isLeafNode())){ // choosing its successor node to replace it if its not leaf and not unary node.
             WAVLNode s = findSuccessor(nearestNode);
-            int tempKey = s.key;
-            String tempInfo = s.info;
-            s.key = nearestNode.key;
-            s.info = nearestNode.info;
-            nearestNode.key = tempKey;
-            nearestNode.info = tempInfo;
-            nearestNode = s;
-            parent = nearestNode.parent;
-            removeNodeFromTree(nearestNode); //remove the successor node from the tree
+            parent = s.parent;
+            removeNodeFromTree(s); //remove the successor node from the tree
 
-//            parent = s.parent;
-//            removeNodeFromTree(s); // remove the successor from its current location on the tree.
-//
-//            // putting s instead of the node we delete in the tree
-//            s.parent = nearestNode.parent;
-//            if(nearestNode != root) {  //might be false if we delete the root.
-//                if (nearestNode.isARightChild()) // if its not the root then its parent is not null
-//                    nearestNode.parent.right = s;
-//                else
-//                    nearestNode.parent.left = s;
-//            }
-//            else{
-//                root = s;
-//            }
-//            //replace the node with its successor
-//            s.rank = nearestNode.rank;
-//            if(parent != nearestNode) { // if the successor s of the node we delete is its right child we need to prevent a loop.
-//                s.right = nearestNode.right;
-//            }
-//            else // if s is its right child then s become its previos parent after switching between s and the deleted node.
-//                parent = s;
-//            if(!s.right.isExternalNode()) // will happan if the successor of the deleted node was a leaf and was its right child
-//                s.right.parent = s;
-//            s.left = nearestNode.left;
-//            s.left.parent = s;
+            nearestNode.key = s.key;
+            nearestNode.info = s.info;
+            if(max == s){
+                max = nearestNode;
+            }
+            nearestNode = s;
         }
         else{
             parent = nearestNode.parent;
@@ -346,7 +320,6 @@ public class WAVLTree {
                 s.right.parent = parent;
             }
         }
-
     }
 
     /**
@@ -358,7 +331,7 @@ public class WAVLTree {
         if(!node.right.isExternalNode())
             return minimumNode(node.right);
         WAVLNode y = node.parent;
-        while (y != null && node == y.right){
+        while (y != null && node == y.right) {
             node = y;
             y = node.parent;
         }

@@ -174,7 +174,7 @@ public class WAVLTree {
             // putting s instead of the node we delete in the tree
             s.parent = nearestNode.parent;
             if(nearestNode != root) {  //might be false if we delete the root.
-                if (nearestNode.isARightChild())
+                if (nearestNode.isARightChild()) // if its not the root then its parent is not null
                     nearestNode.parent.right = s;
                 else
                     nearestNode.parent.left = s;
@@ -184,8 +184,13 @@ public class WAVLTree {
             }
             //replace the node with its successor
             s.rank = nearestNode.rank;
-            s.right = nearestNode.right;
-            s.right.parent = s;
+            if(parent != nearestNode) { // if the successor s of the node we delete is its right child we need to prevent a loop.
+                s.right = nearestNode.right;
+            }
+            else // if s is its right child then s become its previos parent after switching between s and the deleted node.
+                parent = s;
+            if(!s.right.isExternalNode()) // will happan if the successor of the deleted node was a leaf and was its right child
+                s.right.parent = s;
             s.left = nearestNode.left;
             s.left.parent = s;
         }
